@@ -1,4 +1,4 @@
-import { Chain } from '@usedapp/core/src/constants'
+import { Chain } from '../../constants'
 
 export const Berachain: Chain = {
   chainId: 80084,
