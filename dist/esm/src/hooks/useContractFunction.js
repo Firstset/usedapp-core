@@ -28,13 +28,7 @@ export function useContractFunction(contract, functionName, options) {
             if (functionName === 'propose') {
                 const proposeFunctions = Object.keys(contractWithSigner.functions)
                     .filter(key => key.startsWith('propose('));
-                if (args.length === 5) {
-                    args.push(0);
-                }
-                const matchingPropose = proposeFunctions.find(key => {
-                    const paramCount = key.split(',').length - 1;
-                    return paramCount === args.length;
-                });
+                const matchingPropose = proposeFunctions[1];
                 if (!matchingPropose) {
                     throw new Error(`No matching propose function for ${args.length} arguments. This could be due to a mismatch between the number of arguments provided and the available function signatures.`);
                 }

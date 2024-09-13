@@ -90,13 +90,7 @@ function useContractFunction(contract, functionName, options) {
                         if (!(functionName === 'propose')) return [3 /*break*/, 3];
                         proposeFunctions = Object.keys(contractWithSigner.functions)
                             .filter(function (key) { return key.startsWith('propose('); });
-                        if (args.length === 5) {
-                            args.push(0);
-                        }
-                        matchingPropose = proposeFunctions.find(function (key) {
-                            var paramCount = key.split(',').length - 1;
-                            return paramCount === args.length;
-                        });
+                        matchingPropose = proposeFunctions[1];
                         if (!matchingPropose) {
                             throw new Error("No matching propose function for ".concat(args.length, " arguments. This could be due to a mismatch between the number of arguments provided and the available function signatures."));
                         }
