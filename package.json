@@ -4,7 +4,7 @@
   "main": "dist/cjs/src/index.js",
   "module": "dist/esm/src/index.js",
   "types": "dist/esm/src/index.d.ts",
-  "repository": "git@github.com:ripe0x/usedapp-core-sepolia.git",
+  "repository": "git@github.com:Firstset/usedapp-core.git",
   "author": "Ethworks",
   "license": "MIT",
   "sideEffects": false,
