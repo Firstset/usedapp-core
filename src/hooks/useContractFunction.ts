@@ -22,29 +22,69 @@ export function connectContractToSigner(contract: Contract, options?: Transactio
   throw new TypeError('No signer available in contract, options or library')
 }
 
-export function useContractFunction(contract: Contract, functionName: string, options?: TransactionOptions) {
+export function useContractFunction(
+  contract: Contract, 
+  functionName: string, 
+  options?: TransactionOptions
+) {
   const { library, chainId } = useEthers()
   const { promiseTransaction, state, resetState } = usePromiseTransaction(chainId, options)
   const [events, setEvents] = useState<LogDescription[] | undefined>(undefined)
 
   const send = useCallback(
     async (...args: any[]) => {
+      if (!contract) {
+        throw new Error('Contract is undefined');
+      }
+
       const contractWithSigner = connectContractToSigner(contract, options, library)
-      const receipt = await promiseTransaction(contractWithSigner[functionName](...args))
-      if (receipt?.logs) {
-        const events = receipt.logs.reduce((accumulatedLogs, log) => {
-          try {
-            return addressEqual(log.address, contract.address)
-              ? [...accumulatedLogs, contract.interface.parseLog(log)]
-              : accumulatedLogs
-          } catch (_err) {
-            return accumulatedLogs
+      
+      try {
+        let tx;
+        if (functionName === 'propose') {
+          const proposeFunctions = Object.keys(contractWithSigner.functions)
+            .filter(key => key.startsWith('propose('));
+
+          if (args.length === 5) {
+            args.push(0);
           }
-        }, [] as LogDescription[])
-        setEvents(events)
+
+          const matchingPropose = proposeFunctions.find(key => {
+            const paramCount = key.split(',').length - 1;
+            return paramCount === args.length;
+          });
+
+          if (!matchingPropose) {
+            throw new Error(`No matching propose function for ${args.length} arguments. This could be due to a mismatch between the number of arguments provided and the available function signatures.`);
+          }
+
+          tx = await contractWithSigner.functions[matchingPropose](...args);
+        } else {
+          if (typeof contractWithSigner.functions[functionName] !== 'function') {
+            throw new Error(`Function ${functionName} is not a function on the contract`);
+          }
+          tx = await contractWithSigner.functions[functionName](...args);
+        }
+
+        const receipt = await promiseTransaction(tx)
+        
+        if (receipt?.logs) {
+          const events = receipt.logs.reduce((accumulatedLogs, log) => {
+            try {
+              return addressEqual(log.address, contract.address)
+                ? [...accumulatedLogs, contract.interface.parseLog(log)]
+                : accumulatedLogs
+            } catch (_err) {
+              return accumulatedLogs
+            }
+          }, [] as LogDescription[])
+          setEvents(events)
+        }
+      } catch (error) {
+        throw error
       }
     },
-    [contract, functionName, options, library]
+    [contract, functionName, options, library, promiseTransaction]
   )
 
   return { send, state, events, resetState }

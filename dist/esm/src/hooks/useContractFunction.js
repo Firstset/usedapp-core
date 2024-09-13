@@ -19,22 +19,52 @@ export function useContractFunction(contract, functionName, options) {
     const { promiseTransaction, state, resetState } = usePromiseTransaction(chainId, options);
     const [events, setEvents] = useState(undefined);
     const send = useCallback(async (...args) => {
-        const contractWithSigner = connectContractToSigner(contract, options, library);
-        const receipt = await promiseTransaction(contractWithSigner[functionName](...args));
-        if (receipt === null || receipt === void 0 ? void 0 : receipt.logs) {
-            const events = receipt.logs.reduce((accumulatedLogs, log) => {
-                try {
-                    return addressEqual(log.address, contract.address)
-                        ? [...accumulatedLogs, contract.interface.parseLog(log)]
-                        : accumulatedLogs;
-                }
-                catch (_err) {
-                    return accumulatedLogs;
-                }
-            }, []);
-            setEvents(events);
+        if (!contract) {
+            throw new Error('Contract is undefined');
         }
-    }, [contract, functionName, options, library]);
+        const contractWithSigner = connectContractToSigner(contract, options, library);
+        try {
+            let tx;
+            if (functionName === 'propose') {
+                const proposeFunctions = Object.keys(contractWithSigner.functions)
+                    .filter(key => key.startsWith('propose('));
+                if (args.length === 5) {
+                    args.push(0);
+                }
+                const matchingPropose = proposeFunctions.find(key => {
+                    const paramCount = key.split(',').length - 1;
+                    return paramCount === args.length;
+                });
+                if (!matchingPropose) {
+                    throw new Error(`No matching propose function for ${args.length} arguments. This could be due to a mismatch between the number of arguments provided and the available function signatures.`);
+                }
+                tx = await contractWithSigner.functions[matchingPropose](...args);
+            }
+            else {
+                if (typeof contractWithSigner.functions[functionName] !== 'function') {
+                    throw new Error(`Function ${functionName} is not a function on the contract`);
+                }
+                tx = await contractWithSigner.functions[functionName](...args);
+            }
+            const receipt = await promiseTransaction(tx);
+            if (receipt === null || receipt === void 0 ? void 0 : receipt.logs) {
+                const events = receipt.logs.reduce((accumulatedLogs, log) => {
+                    try {
+                        return addressEqual(log.address, contract.address)
+                            ? [...accumulatedLogs, contract.interface.parseLog(log)]
+                            : accumulatedLogs;
+                    }
+                    catch (_err) {
+                        return accumulatedLogs;
+                    }
+                }, []);
+                setEvents(events);
+            }
+        }
+        catch (error) {
+            throw error;
+        }
+    }, [contract, functionName, options, library, promiseTransaction]);
     return { send, state, events, resetState };
 }
 //# sourceMappingURL=useContractFunction.js.map

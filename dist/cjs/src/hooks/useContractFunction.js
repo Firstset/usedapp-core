@@ -74,14 +74,47 @@ function useContractFunction(contract, functionName, options) {
             args[_i] = arguments[_i];
         }
         return __awaiter(_this, void 0, void 0, function () {
-            var contractWithSigner, receipt, events_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var contractWithSigner, tx, proposeFunctions, matchingPropose, receipt, events_1, error_1;
+            var _a, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
+                        if (!contract) {
+                            throw new Error('Contract is undefined');
+                        }
                         contractWithSigner = connectContractToSigner(contract, options, library);
-                        return [4 /*yield*/, promiseTransaction(contractWithSigner[functionName].apply(contractWithSigner, args))];
+                        _c.label = 1;
                     case 1:
-                        receipt = _a.sent();
+                        _c.trys.push([1, 7, , 8]);
+                        tx = void 0;
+                        if (!(functionName === 'propose')) return [3 /*break*/, 3];
+                        proposeFunctions = Object.keys(contractWithSigner.functions)
+                            .filter(function (key) { return key.startsWith('propose('); });
+                        if (args.length === 5) {
+                            args.push(0);
+                        }
+                        matchingPropose = proposeFunctions.find(function (key) {
+                            var paramCount = key.split(',').length - 1;
+                            return paramCount === args.length;
+                        });
+                        if (!matchingPropose) {
+                            throw new Error("No matching propose function for ".concat(args.length, " arguments. This could be due to a mismatch between the number of arguments provided and the available function signatures."));
+                        }
+                        return [4 /*yield*/, (_a = contractWithSigner.functions)[matchingPropose].apply(_a, args)];
+                    case 2:
+                        tx = _c.sent();
+                        return [3 /*break*/, 5];
+                    case 3:
+                        if (typeof contractWithSigner.functions[functionName] !== 'function') {
+                            throw new Error("Function ".concat(functionName, " is not a function on the contract"));
+                        }
+                        return [4 /*yield*/, (_b = contractWithSigner.functions)[functionName].apply(_b, args)];
+                    case 4:
+                        tx = _c.sent();
+                        _c.label = 5;
+                    case 5: return [4 /*yield*/, promiseTransaction(tx)];
+                    case 6:
+                        receipt = _c.sent();
                         if (receipt === null || receipt === void 0 ? void 0 : receipt.logs) {
                             events_1 = receipt.logs.reduce(function (accumulatedLogs, log) {
                                 try {
@@ -94,11 +127,15 @@ function useContractFunction(contract, functionName, options) {
                             }, []);
                             setEvents(events_1);
                         }
-                        return [2 /*return*/];
+                        return [3 /*break*/, 8];
+                    case 7:
+                        error_1 = _c.sent();
+                        throw error_1;
+                    case 8: return [2 /*return*/];
                 }
             });
         });
-    }, [contract, functionName, options, library]);
+    }, [contract, functionName, options, library, promiseTransaction]);
     return { send: send, state: state, events: events, resetState: resetState };
 }
 exports.useContractFunction = useContractFunction;
