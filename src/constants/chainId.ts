@@ -102,5 +102,5 @@ export enum ChainId {
   Arbitrum = 42161,
   ArbitrumRinkeby = 421611,
   Sepolia = 11155111,
-  Berachain = 80084,
+  Berachain = 80094,
 }
