@@ -68,6 +68,6 @@ export var ChainId;
     ChainId[ChainId["Arbitrum"] = 42161] = "Arbitrum";
     ChainId[ChainId["ArbitrumRinkeby"] = 421611] = "ArbitrumRinkeby";
     ChainId[ChainId["Sepolia"] = 11155111] = "Sepolia";
-    ChainId[ChainId["Berachain"] = 80084] = "Berachain";
+    ChainId[ChainId["Berachain"] = 80094] = "Berachain";
 })(ChainId || (ChainId = {}));
 //# sourceMappingURL=chainId.js.map
